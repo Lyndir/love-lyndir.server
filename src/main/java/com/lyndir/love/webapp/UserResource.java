@@ -6,7 +6,8 @@ import com.lyndir.love.webapp.data.User;
 import com.lyndir.love.webapp.data.service.UserDAO;
 import java.net.URI;
 import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 
 /**
@@ -48,14 +49,18 @@ public class UserResource {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{emailAddress}/level")
-    public Response level(@PathParam("emailAddress") final String emailAddress) {
+    public Response level(@PathParam("emailAddress") final String emailAddress, @MatrixParam("name") final String name) {
         // Check input.
         User user = userDAO.findUser( emailAddress );
         if (user == null)
             return Response.status( Response.Status.NOT_FOUND ).entity( "No user with `emailAddress`: " + emailAddress ).build();
 
+        // Handle.
+        LoveLevel loveLevel = user.getLoveLevel();
+        String entity = name == null? String.valueOf( loveLevel.ordinal() ): loveLevel.name();
+
         // Response.
-        return Response.ok( user.getLoveLevel().name() ).build();
+        return Response.ok( entity ).build();
     }
 
     @POST
