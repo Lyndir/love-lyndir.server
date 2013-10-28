@@ -20,9 +20,10 @@ import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
 import com.lyndir.lhunath.opal.jpa.PersistFilter;
 import com.lyndir.lhunath.opal.system.logging.Logger;
-import com.lyndir.love.webapp.UserResource;
-import com.lyndir.love.webapp.UserServlet;
+import com.lyndir.love.webapp.resource.UserResource;
 import com.lyndir.love.webapp.data.service.DAOModule;
+import com.lyndir.love.webapp.util.GsonJsonProvider;
+import com.lyndir.love.webapp.util.ModelExceptionMapper;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
 
@@ -48,6 +49,8 @@ public class GuiceContext extends GuiceServletContextListener {
                 bind( PersistFilter.class ).in( Scopes.SINGLETON );
 
                 bind( UserResource.class );
+                bind( GsonJsonProvider.class );
+                bind( ModelExceptionMapper.class );
                 serve( PATH_APP_REST ).with( GuiceContainer.class );
             }
         } );

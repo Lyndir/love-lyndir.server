@@ -1,5 +1,6 @@
 package com.lyndir.love.webapp.data;
 
+import com.google.gson.annotations.Expose;
 import com.lyndir.lhunath.opal.system.i18n.Localized;
 import com.lyndir.lhunath.opal.system.i18n.MessagesFactory;
 import com.lyndir.lhunath.opal.system.util.MetaObject;
@@ -15,9 +16,11 @@ public class EmailAddress extends MetaObject implements Localized {
     private static final Messages msgs = MessagesFactory.create( Messages.class );
 
     @Id
+    @Expose
     private final String  address;
     @ManyToOne
     private       User    user;
+    @Expose
     private       boolean validated;
 
     @Deprecated

@@ -1,8 +1,8 @@
 package com.lyndir.love.webapp.data.service;
 
-public class EmailAddressUnavailableException extends Exception {
+public class EmailAddressUnavailableException extends ModelException {
 
     public EmailAddressUnavailableException(final String address) {
-        super( "Address unavailable: " + address );
+        super( "Address unavailable: `" + address + "`" );
     }
 }

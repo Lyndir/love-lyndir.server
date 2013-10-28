@@ -16,9 +16,11 @@
 package com.lyndir.love.webapp.data;
 
 import static com.google.common.base.Preconditions.*;
+import static com.lyndir.lhunath.opal.system.util.ObjectUtils.ifNotNullElse;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.gson.annotations.Expose;
 import com.lyndir.lhunath.opal.system.i18n.Localized;
 import com.lyndir.lhunath.opal.system.i18n.MessagesFactory;
 import com.lyndir.lhunath.opal.system.util.MetaObject;
@@ -41,9 +43,13 @@ public class User extends MetaObject implements Localized {
 
     @Id
     private final long               id             = random.nextLong();
+    @Expose
     @OneToMany(mappedBy = "user")
     private final List<EmailAddress> emailAddresses = Lists.newLinkedList();
-    private       LoveLevel          loveLevel      = LoveLevel.UNLOVED;
+    @OneToMany(mappedBy = "user")
+    private final List<Receipt>      receipts        = Lists.newLinkedList();
+    @Expose
+    private       LoveLevel          loveLevel      = LoveLevel.FREE;
 
     @Deprecated
     public User() {
@@ -73,14 +79,25 @@ public class User extends MetaObject implements Localized {
 
     @Override
     public String getLocalizedType() {
-
         return msgs.type();
     }
 
     @Override
     public String getLocalizedInstance() {
-
         return msgs.instance( Iterables.getFirst( getEmailAddresses(), "<no email>" ) );
+    }
+
+    public List<Receipt> getReceipts() {
+        return receipts;
+    }
+
+    public void addReceipt(final String application, final String appReceiptB64) {
+        for (final Receipt receipt : receipts)
+            if (receipt.getApplication().equals( application )) {
+                receipt.setReceiptB64( appReceiptB64 );
+                return;
+            }
+        receipts.add( new Receipt( this, application, appReceiptB64 ) );
     }
 
     interface Messages {
