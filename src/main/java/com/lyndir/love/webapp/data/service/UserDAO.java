@@ -1,6 +1,6 @@
 package com.lyndir.love.webapp.data.service;
 
-import com.lyndir.love.webapp.data.User;
+import com.lyndir.love.webapp.data.*;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -12,15 +12,17 @@ import javax.annotation.Nullable;
 public interface UserDAO {
 
     @Nonnull
-    User newUser(String emailAddress)
+    User newUser(Mode mode, String emailAddress)
             throws EmailAddressUnavailableException;
 
     @Nullable
-    User findUser(String emailAddress);
+    User findUser(Mode mode, String emailAddress);
 
     @Nonnull
-    User findOrNewUser(String emailAddress);
+    User findOrNewUser(Mode mode, String emailAddress);
 
     @Nonnull
-    List<User> listUsers();
+    List<User> listUsers(Mode mode);
+
+    void addReceipt(@Nonnull User user, @Nonnull String application, @Nonnull String appReceiptB64);
 }

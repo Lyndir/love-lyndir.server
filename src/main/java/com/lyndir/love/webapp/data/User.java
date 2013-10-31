@@ -16,7 +16,6 @@
 package com.lyndir.love.webapp.data;
 
 import static com.google.common.base.Preconditions.*;
-import static com.lyndir.lhunath.opal.system.util.ObjectUtils.ifNotNullElse;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -25,9 +24,7 @@ import com.lyndir.lhunath.opal.system.i18n.Localized;
 import com.lyndir.lhunath.opal.system.i18n.MessagesFactory;
 import com.lyndir.lhunath.opal.system.util.MetaObject;
 import java.io.Serializable;
-import java.security.SecureRandom;
 import java.util.List;
-import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 
@@ -38,24 +35,30 @@ import javax.persistence.*;
 @Entity
 public class User extends MetaObject implements Localized {
 
-    private static final Random   random = new SecureRandom();
-    private static final Messages msgs   = MessagesFactory.create( Messages.class );
+    private static final Messages msgs = MessagesFactory.create( Messages.class );
 
     @Id
-    private final long               id             = random.nextLong();
+    @GeneratedValue
+    private final long               id             = 0;
     @Expose
     @OneToMany(mappedBy = "user")
     private final List<EmailAddress> emailAddresses = Lists.newLinkedList();
     @OneToMany(mappedBy = "user")
-    private final List<Receipt>      receipts        = Lists.newLinkedList();
+    private final List<Receipt>      receipts       = Lists.newLinkedList();
     @Expose
-    private       LoveLevel          loveLevel      = LoveLevel.FREE;
+    private final Mode mode;
+    @Expose
+    private LoveLevel loveLevel = LoveLevel.FREE;
+    @Expose
+    private int activeSubscriptions;
 
     @Deprecated
     public User() {
+        mode = null;
     }
 
-    public User(@Nonnull final EmailAddress emailAddress) {
+    public User(@Nonnull final Mode mode, @Nonnull final EmailAddress emailAddress) {
+        this.mode = mode;
         emailAddress.setUser( this );
     }
 
@@ -69,12 +72,25 @@ public class User extends MetaObject implements Localized {
     }
 
     @Nonnull
+    public Mode getMode() {
+        return mode;
+    }
+
+    @Nonnull
     public LoveLevel getLoveLevel() {
         return checkNotNull( loveLevel );
     }
 
     public void setLoveLevel(@Nonnull final LoveLevel loveLevel) {
         this.loveLevel = checkNotNull( loveLevel );
+    }
+
+    public int getActiveSubscriptions() {
+        return activeSubscriptions;
+    }
+
+    public void setActiveSubscriptions(final int activeSubscriptions) {
+        this.activeSubscriptions = activeSubscriptions;
     }
 
     @Override
@@ -87,17 +103,9 @@ public class User extends MetaObject implements Localized {
         return msgs.instance( Iterables.getFirst( getEmailAddresses(), "<no email>" ) );
     }
 
+    @Nonnull
     public List<Receipt> getReceipts() {
         return receipts;
-    }
-
-    public void addReceipt(final String application, final String appReceiptB64) {
-        for (final Receipt receipt : receipts)
-            if (receipt.getApplication().equals( application )) {
-                receipt.setReceiptB64( appReceiptB64 );
-                return;
-            }
-        receipts.add( new Receipt( this, application, appReceiptB64 ) );
     }
 
     interface Messages {

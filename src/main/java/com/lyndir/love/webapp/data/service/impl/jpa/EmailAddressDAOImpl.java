@@ -27,9 +27,10 @@ public class EmailAddressDAOImpl implements EmailAddressDAO {
     @Override
     public EmailAddress newAddress(final String address)
             throws EmailAddressUnavailableException {
-        EmailAddress emailAddress = Iterables.getFirst( db.createQuery( "SELECT e FROM EmailAddress e WHERE e.address = ?", EmailAddress.class ) //
-                                                                .setParameter( 1, address ) //
-                                                                .getResultList(), null );
+        EmailAddress emailAddress = Iterables.getFirst(
+                db.createQuery( "SELECT e FROM EmailAddress e WHERE e.address = :address", EmailAddress.class ) //
+                        .setParameter( "address", address ) //
+                        .getResultList(), null );
         if (emailAddress != null)
             throw new EmailAddressUnavailableException( address );
 

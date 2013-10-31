@@ -11,12 +11,16 @@ import javax.annotation.Nullable;
  */
 public enum LoveLevel {
     FREE( null ),
-    LOVED( "com.lyndir.lhunath.MasterPassword.love.loved" ),
-    AWESOME( "com.lyndir.lhunath.MasterPassword.love.awesome" );
-    private final String productID;
+    LIKED( ".love.like" ),
+    LOVED( ".love.love" );
+    private final String productIDSuffix;
 
-    LoveLevel(final String productID) {
-        this.productID = productID;
+    LoveLevel(final String productIDSuffix) {
+        this.productIDSuffix = productIDSuffix;
+    }
+
+    public boolean isSubscription() {
+        return this.productIDSuffix != null;
     }
 
     @Nullable
@@ -35,14 +39,9 @@ public enum LoveLevel {
     @Nullable
     public static LoveLevel ofProductID(final String productID) {
         for (LoveLevel loveLevel : values())
-            if (productID.equals( loveLevel.productID ))
+            if (productID.endsWith( loveLevel.productIDSuffix ))
                 return loveLevel;
 
         return null;
-    }
-
-    @Nonnull
-    public static LoveLevel max(@Nonnull final LoveLevel one, @Nonnull final LoveLevel two) {
-        return one.ordinal() > two.ordinal()? one: two;
     }
 }

@@ -17,13 +17,16 @@ package com.lyndir.love.webapp.data.service;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import com.lyndir.lhunath.opal.jpa.Persist;
 import com.lyndir.lhunath.opal.system.logging.Logger;
+import com.lyndir.love.webapp.data.service.impl.ReceiptServiceImpl;
 import com.lyndir.love.webapp.data.service.impl.jpa.*;
 
 
 /**
- * <h2>{@link DAOModule}<br> <sub>[in short] (TODO).</sub></h2>
+ * <h2>{@link ServiceModule}<br> <sub>[in short] (TODO).</sub></h2>
  *
  * <p> [description / usage]. </p>
  *
@@ -31,9 +34,9 @@ import com.lyndir.love.webapp.data.service.impl.jpa.*;
  *
  * @author lhunath
  */
-public class DAOModule extends AbstractModule {
+public class ServiceModule extends AbstractModule {
 
-    static final Logger logger = Logger.get( DAOModule.class );
+    static final Logger logger = Logger.get( ServiceModule.class );
 
     /**
      * {@inheritDoc}
@@ -41,12 +44,15 @@ public class DAOModule extends AbstractModule {
     @Override
     protected void configure() {
         // Database
-        logger.dbg( "Binding persistence providers" );
-        bind( Persist.class ).toProvider( JPAProvider.class ).in( Scopes.SINGLETON );
+        logger.dbg( "Configuring persistence providers" );
+        bind( Persist.class ).toProvider( JPAProvider.class );
 
         // Services
-        logger.dbg( "Binding data services" );
+        logger.dbg( "Configuring data services" );
         bind( EmailAddressDAO.class ).to( EmailAddressDAOImpl.class );
         bind( UserDAO.class ).to( UserDAOImpl.class );
+
+        logger.dbg( "Configuring application services" );
+        bind( ReceiptService.class ).to( ReceiptServiceImpl.class );
     }
 }

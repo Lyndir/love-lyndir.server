@@ -31,6 +31,7 @@ public class Receipt extends MetaObject {
     @ManyToOne
     private final User   user;
     private final String application;
+    @Column(length = 512/* kB */ * 1024)
     private       String receiptB64;
 
     @Deprecated
