@@ -15,9 +15,13 @@
  */
 package com.lyndir.love.webapp.listener;
 
+import com.google.api.client.repackaged.com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.*;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
+import com.lyndir.lhunath.opal.jpa.Persist;
 import com.lyndir.lhunath.opal.jpa.PersistFilter;
 import com.lyndir.lhunath.opal.system.logging.Logger;
 import com.lyndir.love.webapp.data.service.ServiceModule;
@@ -25,6 +29,9 @@ import com.lyndir.love.webapp.resource.UserResource;
 import com.lyndir.love.webapp.util.GsonJsonProvider;
 import com.lyndir.love.webapp.util.ModelExceptionMapper;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
+import java.net.URI;
+import java.util.Iterator;
+import javax.persistence.Persistence;
 
 
 /**
@@ -34,7 +41,7 @@ public class GuiceContext extends GuiceServletContextListener {
 
     static final Logger logger = Logger.get( GuiceContext.class );
 
-    private static final String PATH_APP = "/app/*";
+    private static final String PATH_APP      = "/app/*";
     private static final String PATH_APP_REST = "/app/rest/*";
 
     /**
@@ -45,8 +52,37 @@ public class GuiceContext extends GuiceServletContextListener {
         return Guice.createInjector( Stage.DEVELOPMENT, new ServiceModule(), new ServletModule() {
             @Override
             protected void configureServlets() {
-                filter( PATH_APP ).through( PersistFilter.class );
+                logger.dbg( "Configuring persistence filter" );
+                Persist persistence;
+                String databaseURL = System.getenv( "DATABASE_URL" );
+                if (databaseURL != null) {
+                    // Heroku container.
+                    URI dbURI = URI.create( databaseURL );
 
+                    // Determine username and password.
+                    Iterator<String> userInfoIt = Splitter.on( ':' ).split( dbURI.getUserInfo() ).iterator();
+                    String username = userInfoIt.next();
+                    String password = userInfoIt.next();
+
+                    // Determine JDBC connection URL.
+                    String scheme = dbURI.getScheme();
+                    Preconditions.checkState( "postgres".equals( scheme ), "Unsupported database provider: %s", scheme );
+                    String url = String.format( "jdbc:postgresql://%s:%d%s", dbURI.getHost(), dbURI.getPort(), dbURI.getPath() );
+
+                    // Build JPA connection properties.
+                    ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
+                    properties.put( "javax.persistence.jdbc.url", url );
+                    properties.put( "javax.persistence.jdbc.user", username );
+                    properties.put( "javax.persistence.jdbc.password", password );
+                    properties.put( "javax.persistence.jdbc.driver", "org.postgresql.Driver" );
+                    properties.put( "hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect" );
+                    properties.put( "hibernate.hbm2ddl.auto", "update" );
+                    persistence = new Persist( Persistence.createEntityManagerFactory( Persist.DEFAULT_UNIT, properties.build() ) );
+                } else
+                    persistence = new Persist();
+                filter( PATH_APP ).through( new PersistFilter( persistence ) );
+
+                logger.dbg( "Configuring API resources" );
                 bind( UserResource.class );
                 bind( GsonJsonProvider.class );
                 bind( ModelExceptionMapper.class );
