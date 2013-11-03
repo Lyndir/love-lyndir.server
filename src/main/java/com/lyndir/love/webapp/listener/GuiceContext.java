@@ -52,7 +52,7 @@ public class GuiceContext extends GuiceServletContextListener {
         return Guice.createInjector( Stage.DEVELOPMENT, new ServiceModule(), new ServletModule() {
             @Override
             protected void configureServlets() {
-                logger.dbg( "Configuring persistence filter" );
+                logger.dbg( "Configuring persistence filtelo" );
                 Persist persistence;
                 String databaseURL = System.getenv( "DATABASE_URL" );
                 if (databaseURL != null) {

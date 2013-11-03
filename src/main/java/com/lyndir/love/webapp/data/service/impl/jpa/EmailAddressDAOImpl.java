@@ -16,12 +16,10 @@ import javax.persistence.criteria.CriteriaBuilder;
 public class EmailAddressDAOImpl implements EmailAddressDAO {
 
     private final EntityManager   db;
-    private final CriteriaBuilder cb;
 
     @Inject
     public EmailAddressDAOImpl(final Persist persist) {
         this.db = persist.getEntityManager();
-        this.cb = db.getCriteriaBuilder();
     }
 
     @Override

@@ -18,12 +18,12 @@ import com.lyndir.love.webapp.data.*;
 import com.lyndir.love.webapp.data.service.ReceiptService;
 import com.lyndir.love.webapp.data.service.UserDAO;
 import com.lyndir.love.webapp.util.HttpUtils;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.joda.time.Duration;
+import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
 import org.joda.time.format.ISOPeriodFormat;
 
@@ -94,7 +94,7 @@ public class ReceiptServiceImpl implements ReceiptService {
         final FluentIterable<Receipt> fromReceipts = FluentIterable.from( user.getReceipts() );
         final FluentIterable<VerifyReceiptResult> fromKnownResults = FluentIterable.from( knownResultsSet );
 
-        int subscriptions = 0;
+        Set<LoveLevel> subscriptions = Sets.newHashSet();
         LoveLevel userLoveLevel = LoveLevel.FREE;
         for (final VerifyReceiptResult receipt : fromReceipts.transform( new NFunctionNN<Receipt, VerifyReceiptResult>() {
             @Nullable
@@ -130,25 +130,27 @@ public class ReceiptServiceImpl implements ReceiptService {
                 if (purchaseDate == null || expiresDate == null)
                     // Not an auto-renew subscription.
                     continue;
+
+                Period remainingTime = new Duration( now.getTime(), expiresDate ).toPeriod();
                 if (expiresDate < now.getTime() || purchaseDate > now.getTime()) {
                     // Expired or not yet active subscription.
-                    logger.trc( "- Expired: %s (elapsed: %s)", //
-                                purchaseLevel, ISOPeriodFormat.standard().print( new Duration( now.getTime(), expiresDate ).toPeriod() ) );
+                    logger.trc( "- Expired: %s (elapsed: %s)", purchaseLevel, ISOPeriodFormat.standard().print( remainingTime ) );
                     continue;
                 }
 
                 if (purchaseLevel.isSubscription())
                     // This purchase is an active user subscription.
-                    ++subscriptions;
+                    subscriptions.add( purchaseLevel );
 
-                logger.dbg( "- Active: %s (remaining: %s)", //
-                            purchaseLevel, ISOPeriodFormat.standard().print( new Duration( now.getTime(), expiresDate ).toPeriod() ) );
+                logger.dbg( "- Active: %s (remaining: %s)", purchaseLevel, ISOPeriodFormat.standard().print( remainingTime ) );
                 userLoveLevel = EnumUtils.max( userLoveLevel, purchaseLevel );
             }
         }
 
-        user.setActiveSubscriptions( subscriptions );
+        user.setActiveSubscriptions( subscriptions.size() );
         user.setLoveLevel( userLoveLevel );
+        logger.dbg( "-> Updated user: %s (subscriptions: %s, user level: %s)", //
+                    user.getEmailAddresses().iterator().next().getAddress(), subscriptions, userLoveLevel );
     }
 
     private VerifyReceiptResult verifyReceipt(final User user, final String application, final String receiptB64) {
@@ -160,19 +162,22 @@ public class ReceiptServiceImpl implements ReceiptService {
                 return null;
             }
 
-            VerifyReceiptResult result = response.parseAs( VerifyReceiptResult.class );
+            String responseString = response.parseAsString();
+            ByteArrayInputStream in = new ByteArrayInputStream( Charsets.UTF_8.encode( responseString ).array() );
+            VerifyReceiptResult result = response.getRequest().getParser().parseAndClose( in, Charsets.UTF_8, VerifyReceiptResult.class );
             if (result.statusAsEnum() != VerifyReceiptResult.Status.SUCCESS) {
                 logger.wrn( "Verify Receipt response unsuccessful: (status %d) %s", result.status, result.statusAsEnum().name() );
                 return null;
             }
 
             // Write the response to file for auditing.
-            File responseLogFile = new File( String.format( "log/responses/%s/%s-%s.json", user.getEmailAddresses(),
-                                                            ISODateTimeFormat.date().print( System.currentTimeMillis() ), application ) );
-            if (!responseLogFile.getParentFile().mkdirs())
-                logger.wrn( "Failed to create log path for: %s", responseLogFile );
+            File responseLogFile = new File(
+                    String.format( "log/responses/%s/%s-%s.json", user.getEmailAddresses().iterator().next().getAddress(),
+                                   ISODateTimeFormat.date().print( System.currentTimeMillis() ), application ) );
+            if (responseLogFile.getParentFile().isDirectory() || responseLogFile.getParentFile().mkdirs())
+                Files.write( responseString, responseLogFile, Charsets.UTF_8 );
             else
-                Files.write( response.parseAsString(), responseLogFile, Charsets.UTF_8 );
+                logger.wrn( "Failed to create log path for: %s", responseLogFile );
 
             // Store latest receipt in user for performing validation when no receipt is available from the app.
             userDAO.addReceipt( user, result.receipt.bundleID, receiptB64 );

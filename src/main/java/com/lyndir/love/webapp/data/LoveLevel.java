@@ -2,7 +2,6 @@ package com.lyndir.love.webapp.data;
 
 import com.google.common.base.Optional;
 import com.lyndir.lhunath.opal.system.util.ConversionUtils;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 
@@ -11,8 +10,8 @@ import javax.annotation.Nullable;
  */
 public enum LoveLevel {
     FREE( null ),
-    LIKED( ".love.like" ),
-    LOVED( ".love.love" );
+    LIKED( ".love.liked" ),
+    LOVED( ".love.loved" );
     private final String productIDSuffix;
 
     LoveLevel(final String productIDSuffix) {
@@ -38,9 +37,10 @@ public enum LoveLevel {
 
     @Nullable
     public static LoveLevel ofProductID(final String productID) {
-        for (LoveLevel loveLevel : values())
-            if (productID.endsWith( loveLevel.productIDSuffix ))
-                return loveLevel;
+        if (productID != null && !productID.isEmpty())
+            for (LoveLevel loveLevel : values())
+                if (loveLevel.productIDSuffix != null && productID.endsWith( loveLevel.productIDSuffix ))
+                    return loveLevel;
 
         return null;
     }
