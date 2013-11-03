@@ -32,7 +32,7 @@ import javax.persistence.*;
 /**
  * @author lhunath
  */
-@Entity
+@Entity(name = "LLUser")
 public class User extends MetaObject implements Localized {
 
     private static final Messages msgs = MessagesFactory.create( Messages.class );

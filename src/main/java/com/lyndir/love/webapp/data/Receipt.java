@@ -23,7 +23,7 @@ import javax.persistence.*;
 /**
  * @author lhunath
  */
-@Entity
+@Entity(name = "LLReceipt")
 public class Receipt extends MetaObject {
 
     @Id

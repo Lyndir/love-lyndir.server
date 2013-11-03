@@ -10,7 +10,7 @@ import javax.persistence.*;
 /**
  * @author lhunath, 2013-10-14
  */
-@Entity
+@Entity(name = "LLEmailAddress")
 public class EmailAddress extends MetaObject implements Localized {
 
     private static final Messages msgs = MessagesFactory.create( Messages.class );
