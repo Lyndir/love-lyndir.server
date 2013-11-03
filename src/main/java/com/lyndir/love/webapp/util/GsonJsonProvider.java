@@ -52,13 +52,8 @@ public class GsonJsonProvider implements MessageBodyReader<Object>, MessageBodyW
     public Object readFrom(final Class<Object> type, final Type genericType, final Annotation[] annotations, final MediaType mediaType,
                            final MultivaluedMap<String, String> httpHeaders, final InputStream entityStream)
             throws IOException, WebApplicationException {
-        return gson.fromJson( new InputStreamReader( entityStream, charsetFromMediaType( mediaType ) ),
+        return gson.fromJson( new InputStreamReader( entityStream, Charsets.UTF_8 ),
                               ifNotNullElse( genericType, type ) );
-    }
-
-    private Charset charsetFromMediaType(final MediaType mediaType) {
-        String charsetName = mediaType.getParameters().get( MediaType.CHARSET_PARAMETER );
-        return charsetName == null? Charsets.UTF_8: Charset.forName( charsetName );
     }
 
     @Override
