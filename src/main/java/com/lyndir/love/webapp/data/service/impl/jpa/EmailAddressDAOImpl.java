@@ -26,7 +26,7 @@ public class EmailAddressDAOImpl implements EmailAddressDAO {
     public EmailAddress newAddress(final String address)
             throws EmailAddressUnavailableException {
         EmailAddress emailAddress = Iterables.getFirst(
-                db.createQuery( "SELECT e FROM EmailAddress e WHERE e.address = :address", EmailAddress.class ) //
+                db.createQuery( "SELECT e FROM LLEmailAddress e WHERE e.address = :address", EmailAddress.class ) //
                         .setParameter( "address", address ) //
                         .getResultList(), null );
         if (emailAddress != null)
