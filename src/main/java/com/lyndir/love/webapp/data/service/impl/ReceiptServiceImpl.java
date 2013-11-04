@@ -6,7 +6,8 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.json.JsonString;
 import com.google.api.client.util.Key;
-import com.google.common.base.*;
+import com.google.common.base.Charsets;
+import com.google.common.base.Supplier;
 import com.google.common.collect.*;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
@@ -37,11 +38,7 @@ public class ReceiptServiceImpl implements ReceiptService {
 
     private static final EnumMap<Mode, GenericUrl> verifyReceiptURLByMode = Maps.newEnumMap( Mode.class );
 
-    private static final Splitter.MapSplitter secretSplitter = Splitter.on( CharMatcher.BREAKING_WHITESPACE )
-                                                                       .omitEmptyStrings()
-                                                                       .trimResults()
-                                                                       .withKeyValueSeparator( '=' );
-    private static final ImmutableMap<String, String> sharedSecretByApp;
+    private static final String sharedSecret;
 
     static {
         logger.dbg( "Configuring receipt service" );
@@ -55,13 +52,18 @@ public class ReceiptServiceImpl implements ReceiptService {
                     break;
             }
 
-        try {
-            sharedSecretByApp = ImmutableMap.copyOf(
-                    secretSplitter.split( Resources.toString( Resources.getResource( "sharedSecrets" ), Charsets.UTF_8 ) ) );
-        }
-        catch (IOException e) {
-            throw new InternalInconsistencyException( "Couldn't load shared secret", e );
-        }
+        sharedSecret = ifNotNullElse( System.getenv( "SHARED_SECRET" ), new NNSupplier<String>() {
+            @Nonnull
+            @Override
+            public String get() {
+                try {
+                    return Resources.toString( Resources.getResource( "sharedSecret" ), Charsets.UTF_8 ).trim();
+                }
+                catch (IOException e) {
+                    throw new InternalInconsistencyException( "Couldn't load shared secret", e );
+                }
+            }
+        } );
     }
 
     private final UserDAO userDAO;
@@ -155,7 +157,7 @@ public class ReceiptServiceImpl implements ReceiptService {
 
     private VerifyReceiptResult verifyReceipt(final User user, final String application, final String receiptB64) {
         try {
-            VerifyReceiptContent content = new VerifyReceiptContent( receiptB64, sharedSecretByApp.get( application ) );
+            VerifyReceiptContent content = new VerifyReceiptContent( receiptB64, sharedSecret );
             HttpResponse response = HttpUtils.postJSON( verifyReceiptURLByMode.get( user.getMode() ), content ).execute();
             if (!response.isSuccessStatusCode()) {
                 logger.wrn( "Verify Receipt request unsuccessful: (status %d) %s", response.getStatusCode(), response.getStatusMessage() );
