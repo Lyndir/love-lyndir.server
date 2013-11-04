@@ -64,6 +64,7 @@ public class ReceiptServiceImpl implements ReceiptService {
                 }
             }
         } );
+        logger.dbg( "shared secret: %s", sharedSecret );
     }
 
     private final UserDAO userDAO;
