@@ -52,7 +52,7 @@ public class GuiceContext extends GuiceServletContextListener {
         return Guice.createInjector( Stage.DEVELOPMENT, new ServiceModule(), new ServletModule() {
             @Override
             protected void configureServlets() {
-                logger.dbg( "Configuring persistence filtelo" );
+                logger.dbg( "Configuring persistence filter" );
                 Persist persistence;
                 String databaseURL = System.getenv( "DATABASE_URL" );
                 if (databaseURL != null) {
@@ -77,6 +77,7 @@ public class GuiceContext extends GuiceServletContextListener {
                     properties.put( "javax.persistence.jdbc.driver", "org.postgresql.Driver" );
                     properties.put( "hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect" );
                     properties.put( "hibernate.hbm2ddl.auto", "update" );
+                    properties.put( "hibernate.show_sql", "false" );
                     persistence = new Persist( Persistence.createEntityManagerFactory( Persist.DEFAULT_UNIT, properties.build() ) );
                 } else
                     persistence = new Persist();
